@@ -72,7 +72,7 @@ Future<void> prepareAssets() async {
 final List<AnimatedScene> animatedScenes = <AnimatedScene>[
   // Not a benchmark. A picture that answers one question.
   //
-  // The receiver's panel is unreadable under GL: its status pill and buttons
+  // The bridge's panel is unreadable under GL: its status pill and buttons
   // render as solid rectangles with the text gone, sampling at full opacity
   // where a 16% accent over the page background should be (21, 40, 61).
   //
@@ -80,7 +80,7 @@ final List<AnimatedScene> animatedScenes = <AnimatedScene>[
   // and the embedder and is dropped in the GL path.
   //
   //   row 1  Color.fromARGB(41, ...)               plain construction
-  //   row 2  base.withValues(alpha: 0.16)          what the receiver uses
+  //   row 2  base.withValues(alpha: 0.16)          what the bridge uses
   //   row 3  Opacity(0.16) over an opaque fill     a different route
   //
   // If rows 1 and 2 come out opaque, the colour API is exonerated and the bug

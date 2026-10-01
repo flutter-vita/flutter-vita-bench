@@ -11,7 +11,7 @@
 #   ./tool/bench.sh --leave sw|gl          renderer the console rests on (default gl)
 #   ./tool/bench.sh --scenes a,b,c         run only these scenes
 #   ./tool/bench.sh --stuck-after 150      seconds on one scene before it is stuck
-#   ./tool/bench.sh --host NAME --receiver-port N
+#   ./tool/bench.sh --host NAME --bridge-port N
 #
 # Needs the flutter-vita toolchain: `flutter-vita` on PATH, or FLUTTER_VITA_ROOT
 # set to a checkout of github.com/flutter-vita/flutter-vita. It builds with
@@ -93,7 +93,7 @@ STUCK_AFTER=150
 while [ $# -gt 0 ]; do
   case "$1" in
     --host)        HOST="$2"; shift 2 ;;
-    --receiver-port) LDR="$2"; shift 2 ;;
+    --bridge-port) LDR="$2"; shift 2 ;;
     --only)        ONLY="$2"; shift 2 ;;
     --leave)       LEAVE="$2"; shift 2 ;;
     --scenes)      SCENES="$2"; shift 2 ;;
@@ -123,8 +123,8 @@ trap 'rm -f "$LOCK"' EXIT
 say() { printf '%s\n' "$2" | nc -4 -w "${3:-20}" "$HOST" "$1" 2>/dev/null; }
 # Write a switch file, through whichever of the two is actually listening.
 #
-# Both the app and the receiver serve `put`, and which one holds the console
-# depends on where the last run left it. Assuming the receiver cost two silent
+# Both the app and the bridge serve `put`, and which one holds the console
+# depends on where the last run left it. Assuming the bridge cost two silent
 # aborts on 2026-08-24: nc found nothing, `set -e` took the script down between
 # two echoes, and the output looked like it had simply stopped.
 put() {  # <content> <device path>
@@ -213,10 +213,10 @@ run_one() {  # <sw|gl>
   echo "==> $mode: arming"
   put "$swval" "ux0:data/flutter-vita/software.on"
   put "1"      "ux0:data/flutter-vita/bench.on"
-  # Always written, even when empty: the receiver can put a file and cannot
+  # Always written, even when empty: the bridge can put a file and cannot
   # delete one, so a stale subset from the previous invocation would silently
   # restrict a run that asked for everything.
-  # A zero-byte put is refused by the Flutter receiver ("ERR size", measured
+  # A zero-byte put is refused by the Flutter bridge ("ERR size", measured
   # 2026-09-12), so an empty subset goes as a newline; the app trims it to
   # nothing and runs everything.
   put "${SCENES:-$'\n'}" "ux0:data/flutter-vita/bench.only"
@@ -236,7 +236,7 @@ run_one() {  # <sw|gl>
     say "$DEV" relaunch 10 >/dev/null || true
   else
     echo "==> $mode: deploying"
-    VITA_HOST="$HOST" "$TOOL/tools/deploy.sh" --vpk "$APP_VPK" --receiver-port "$LDR" \
+    VITA_HOST="$HOST" "$TOOL/tools/deploy.sh" --vpk "$APP_VPK" --bridge-port "$LDR" \
       >"$OUT_DIR/$mode-deploy.log" 2>&1 || true
   fi
 

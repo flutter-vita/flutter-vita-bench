@@ -1,7 +1,7 @@
 # Glossary
 
 The benchmark's own terms. The words it shares with the port (engine,
-receiver, title id, and the rest) are in the
+bridge, title id, and the rest) are in the
 [flutter-vita glossary](https://github.com/flutter-vita/flutter-vita/blob/master/docs/glossary.md).
 These four were there too, until the scenes moved here on 2026-10-01.
 

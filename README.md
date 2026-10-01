@@ -14,7 +14,7 @@ must know whether frames got slower.
 - The flutter-vita toolchain, with `flutter-vita` on your `PATH`. See its
   [Quick start](https://github.com/flutter-vita/flutter-vita#quick-start).
   Or set `FLUTTER_VITA_ROOT` to a checkout of it.
-- A console with the receiver open, on the same network as the computer. The
+- A console with the bridge open, on the same network as the computer. The
   scripts find it as `fluttervita.local`.
 
 ## Run it
@@ -36,7 +36,7 @@ A full run takes about 4 minutes. To run only some scenes:
 `./tool/bench.sh --help` shows all options.
 
 You can also open "Vita Bench" on the console and tap Run, or start it from
-the receiver's TESTS tab. The console shows the result, and the app writes the
+the bridge's TESTS tab. The console shows the result, and the app writes the
 result file to the memory card. Nothing compares it with the baseline.
 
 ## What a regression is

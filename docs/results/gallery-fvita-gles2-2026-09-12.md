@@ -37,7 +37,7 @@ finish / display queue / programs / buffers / framebuffers and textures /
 garbage / patcher / display and context / terminate / down
 ```
 
-The receiver came back. The first run's "receiver did not come up" was the
-poll, not the console: the receiver answers a cold connect after 2 to 4 s and
+The bridge came back. The first run's "bridge did not come up" was the
+poll, not the console: the bridge answers a cold connect after 2 to 4 s and
 the poll gave it 2. `tools/deploy.sh` waits 6 for that reason; so does every
 poll here now.

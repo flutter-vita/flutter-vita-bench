@@ -34,9 +34,13 @@ const String kSoftwareSwitchPath = '$kDataDir/software.on';
 /// vanish.
 const String kBenchDir = '$kDataDir/bench';
 
-/// Written by the receiver's TESTS tab before it launches this app, and by
+/// Written by the bridge's TESTS tab before it launches this app, and by
 /// nothing else. Its presence is the only way to tell a run the TESTS tab asked for
 /// from one a host script started: both write bench.on.
+const String kFromBridgePath = '$kDataDir/bench.from-bridge';
+
+/// The same marker from a bridge built before 2026-10-01, when it was the
+/// receiver.
 const String kFromReceiverPath = '$kDataDir/bench.from-receiver';
 
 /// Asking the dev server to give the console back. See HANDOFF_REQUEST in
@@ -83,7 +87,7 @@ String? engineStamp() {
     final short = rev == null ? '?' : rev.substring(0, 10);
     return built == null ? short : '$short $built';
   } catch (_) {
-    // A receipt that cannot be read is a run without a stamp, which the receiver
+    // A receipt that cannot be read is a run without a stamp, which the bridge
     // already shows as not comparable. It is not a reason to lose the numbers.
     return null;
   }
@@ -100,7 +104,7 @@ const String kOnlyPath = '$kDataDir/bench.only';
 /// True when the host has asked for an unattended run.
 ///
 /// Same shape as gl.on: a '1' in the first byte, not merely the file existing,
-/// because the receiver can `put` a file and cannot delete one -- a switch
+/// because the bridge can `put` a file and cannot delete one -- a switch
 /// keyed on existence is a switch that cannot be turned off remotely.
 bool switchOn(String path) {
   try {
@@ -679,7 +683,7 @@ class BenchRunner {
       'software_on_requested': switchOn(kSoftwareSwitchPath),
       'dart_version': Platform.version.split(' ').first,
       // When, and by which engine. Both absent until today, which is why the
-      // receiver's TESTS tab shows the one result on this card as "no engine
+      // bridge's TESTS tab shows the one result on this card as "no engine
       // stamp, not comparable" -- it was right to.
       'taken': DateTime.now().toIso8601String(),
       if (engineStamp() case final String e) 'engine': e,
@@ -702,7 +706,7 @@ class BenchRunner {
     Directory(kDataDir).createSync(recursive: true);
     _writeAtomic(kResultPath, text);
     // Also under bench/, one file per app per suite, which is what the
-    // receiver lists. The legacy path stays for the host tools.
+    // bridge lists. The legacy path stays for the host tools.
     try {
       Directory(kBenchDir).createSync(recursive: true);
       _writeAtomic('$kBenchDir/FVTA00006-bench.json', text);
@@ -717,16 +721,20 @@ class BenchRunner {
     _handBackIfAsked();
   }
 
-  /// Give the console back to the receiver, if the receiver started this.
+  /// Give the console back to the bridge, if the bridge started this.
   ///
   /// A run launched from the TESTS tab used to end with the app sitting on its
-  /// results and the receiver gone. Host-started runs are left alone:
+  /// results and the bridge gone. Host-started runs are left alone:
   /// tool/bench.sh wants the app alive afterwards.
   void _handBackIfAsked() {
     try {
-      final marker = File(kFromReceiverPath);
-      if (!marker.existsSync()) return;
-      marker.deleteSync();
+      final markers = [File(kFromBridgePath), File(kFromReceiverPath)]
+          .where((f) => f.existsSync())
+          .toList();
+      if (markers.isEmpty) return;
+      for (final m in markers) {
+        m.deleteSync();
+      }
       // Last, and after bench-done: the dev server acts on this within half a
       // second, and anything written afterwards would not be written.
       File(kHandoffPath).writeAsStringSync('', flush: true);
@@ -742,7 +750,7 @@ class BenchRunner {
 /// Write via a .part file and a rename, the only atomic operation here.
 ///
 /// A reader that catches a half-written result must not be able to parse it
-/// as a short one: the receiver would show a run that lost most of its scenes
+/// as a short one: the bridge would show a run that lost most of its scenes
 /// as a run that measured three.
 void writeAtomic(String path, String text) {
   final tmp = File('$path.part');

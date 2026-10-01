@@ -125,7 +125,7 @@ class _BenchPageState extends State<BenchPage> {
         // seconds and one `shot` moves two megabytes, so every capture landed
         // on the results screen instead.
         //
-        // The receiver's panel is unreadable under GL, its pills and buttons
+        // The bridge's panel is unreadable under GL, its pills and buttons
         // rendering at full opacity where 16% was asked for. Software draws
         // them correctly.
         const Padding(
