@@ -13,6 +13,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'run_fab.dart';
 import 'runner.dart';
 import 'scenes.dart';
 
@@ -102,11 +103,11 @@ class _BenchPageState extends State<BenchPage> {
   @override
   Widget build(BuildContext context) {
     final results = _runner?.results ?? const [];
-    return Column(
+    final page = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 2, 4, 0),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
             children: [
               Expanded(
@@ -114,10 +115,6 @@ class _BenchPageState extends State<BenchPage> {
                   _current == null ? _status : '$_status — $_current',
                   style: const TextStyle(fontSize: 13),
                 ),
-              ),
-              TextButton(
-                onPressed: _running ? null : () => _run(writeFile: true),
-                child: Text(_running ? '…' : 'Run'),
               ),
             ],
           ),
@@ -149,6 +146,7 @@ class _BenchPageState extends State<BenchPage> {
         else
           Expanded(
             child: ListView(
+              padding: const EdgeInsets.only(bottom: RunFab.clearance),
               children: [
                 for (final r in results)
                   ListTile(
@@ -169,6 +167,8 @@ class _BenchPageState extends State<BenchPage> {
           ),
       ],
     );
+    return RunFab.over(page,
+        running: _running, onRun: () => _run(writeFile: true));
   }
 }
 
