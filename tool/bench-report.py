@@ -517,7 +517,7 @@ def main():
         print(f"{DIM}worst-frame and stall are printed in the table above and "
               f"graded nowhere: a maximum quantised to whole vsyncs and a "
               f"count of rare events cannot resolve a change. See GRADED in "
-              f"tools/bench-report.py{OFF}")
+              f"tool/bench-report.py{OFF}")
 
     if unresolvable:
         print(f"\n{DIM}not graded — the scene disagrees with itself{OFF}")

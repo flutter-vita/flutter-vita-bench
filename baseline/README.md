@@ -1,25 +1,25 @@
 # Committed baselines
 
-What `tools/bench-report.py` gates against. A run fails when the median of a
+What `tool/bench-report.py` gates against. A run fails when the median of a
 scene's repetitions, for the frame period, the build or the raster, moves
 outside the spread that scene measured for itself, never tighter than 10%. A
 metric whose repetitions spread more than 35% is listed as not graded. The
 worst frame and stalls are printed and not graded. See
-[ADR-0022](../../../docs/adr/0022-the-bench-gate-grades-inside-each-scenes-own-spread.md).
+[ADR-0022](../docs/adr/0022-the-bench-gate-grades-inside-each-scenes-own-spread.md).
 
 Take a baseline over three launches, so that a scene that changes between
 launches shows it in its own spread:
 
 ```sh
-./tools/bench.sh --baseline
-./tools/bench.sh --relaunch --baseline-add
-./tools/bench.sh --relaunch --baseline-add
+./tool/bench.sh --baseline
+./tool/bench.sh --relaunch --baseline-add
+./tool/bench.sh --relaunch --baseline-add
 ```
 
 **`gl.json` is current: 36 scenes, 2026-10-01, three launches, 444/222 MHz,
 method `c3529610`, engine `ff08f75c`. There is no software baseline.** `sw.json` was
 taken at 333 MHz, before the clock fix of that day, so it is deleted. Take it
-with `./tools/bench.sh --only sw --baseline`, and take a fresh GL run in the
+with `./tool/bench.sh --only sw --baseline`, and take a fresh GL run in the
 same sitting if the pair is going to carry the renderer ratio.
 
 ## A baseline belongs to one method
@@ -45,7 +45,7 @@ The gate checks `clocks` the same way, and for the same reason. The embedder
 runs every app at 444/222. From 2026-09-18 to 2026-09-23 the gallery undid
 that in `main()` and measured itself at 333/111, a third slow, and the gate
 compared the two without a word
-([the record](../../../docs/results/gallery-ui-thread-2026-09-23.md)).
+([the record](../docs/results/gallery-ui-thread-2026-09-23.md)).
 
 `method` and `clocks` do not cover the recorder or the engine. A change there
 moves the numbers without touching a scene; the `engine` stamp in the same
@@ -54,13 +54,13 @@ header is what covers that.
 ## sw.json was frozen on purpose
 
 Software rendering became opt-in on 2026-08-24
-([ADR-0014](../../../docs/adr/0014-gpu-backend-via-vitagl.md)): the GPU wins
+([ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0014-gpu-backend-via-vitagl.md)): the GPU wins
 every scene, by 17–20× on the route transitions. Nothing is being optimised on
 the software path, and a full software run costs about two and a half minutes
 of console time per invocation.
 
 It was not re-taken when the engine changed, so it did not describe the
-current binary. It was kept because the software/GPU comparison in ADR-0017 was
+current binary. It was kept because the software/GPU comparison in [ADR-0017](../docs/adr/0017-the-gallery-becomes-the-benchmark.md) was
 drawn from it, and the two sides of that comparison have to come from the same
 build to mean anything.
 
@@ -92,7 +92,7 @@ runs of the same binary:
   between them reached the 159 MB ceiling in twelve seconds. `route_wrap` was
   scene 12 of 18 in the order these numbers were taken in, which puts it just
   past the threshold. See
-  [page-transitions-2026-09-01.md](../../../docs/results/page-transitions-2026-09-01.md).
+  [page-transitions-2026-09-01.md](https://github.com/flutter-vita/flutter-vita/blob/master/docs/results/page-transitions-2026-09-01.md).
 
   The original wording follows, because the reasoning still applies to whatever
   is left after the leak is accounted for. `route_push` builds the most and
@@ -110,7 +110,7 @@ runs of the same binary:
 
 Which is why the gate does not grade `bad bld`. It grades medians, which hold
 still between runs; until 2026-10-01 it graded the worst frame, which did not
-([ADR-0022](../../../docs/adr/0022-the-bench-gate-grades-inside-each-scenes-own-spread.md)).
+([ADR-0022](../docs/adr/0022-the-bench-gate-grades-inside-each-scenes-own-spread.md)).
 
 ## What the suite covers, since 2026-09-01
 
@@ -159,7 +159,7 @@ it used to skip it in silence, and six scenes went ungraded for a day that way.
 After adding one:
 
 ```bash
-./tools/bench.sh --only gl --baseline
+./tool/bench.sh --only gl --baseline
 ```
 
 ## Reading the report

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Sends one file to the LocalSend receiver on the Vita and times the upload.
 #
-#   python3 tools/localsend-bench.py <vita-ip> <file>
+#   python3 tool/localsend-bench.py fluttervita.local <file>
 #
 # This is the end-to-end number the TLS work was aimed at, and until now it was
 # produced by hand: a phone, a stopwatch, and a screenshot. That is not a
@@ -20,8 +20,17 @@
 # is not verified here. The point is BoringSSL's throughput on this console.
 import http.client, json, os, ssl, sys, time
 
-HOST = sys.argv[1] if len(sys.argv) > 1 else "192.168.0.32"
-BLOB = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "blob5m.bin")
+HOST = sys.argv[1] if len(sys.argv) > 1 else "fluttervita.local"
+# Without a file, 5 MiB of random bytes, made once under out/. Random, so
+# nothing on the way can compress it.
+if len(sys.argv) > 2:
+    BLOB = sys.argv[2]
+else:
+    BLOB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "out", "blob5m.bin")
+    if not os.path.isfile(BLOB):
+        os.makedirs(os.path.dirname(BLOB), exist_ok=True)
+        with open(BLOB, "wb") as f:
+            f.write(os.urandom(5 * 1024 * 1024))
 PORT = 53317
 size = os.path.getsize(BLOB)
 name = os.path.basename(BLOB)

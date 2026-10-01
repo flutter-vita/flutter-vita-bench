@@ -1,45 +1,41 @@
-// A gallery with the benchmark and nothing else, for measuring the shell.
+// The flutter-vita benchmark: 36 scenes and nothing else. ADR-0017.
 //
-// Build it with:
+// Until 2026-10-01 the scenes were a tab of the gallery in the tool
+// repository. A scene ran inside a Column under a strip and a Navigator, in a
+// Stack whose other child was an IndexedStack of eight tabs behind an
+// Offstage, and on 2026-09-14 that shell made every small scene build about
+// twice as slow as it does on its own
+// ([the record](../docs/results/gallery-ui-thread-2026-09-23.md)). This app is
+// what that record called bench_only.dart: the part that cannot go, and
+// nothing else.
 //
-//   ./tools/build-vita-app.sh samples/gallery \
-//       --entry-point lib/bench_only.dart --title-id FVTA00002
-//
-// `main.dart` puts a running scene inside a Column under a strip and a
-// Navigator, in a Stack whose other child is an IndexedStack of eight tabs
-// behind an Offstage. On 2026-09-14 a scene owned the screen, and every small
-// scene built about twice as fast as it does now
-// ([the record](../../../docs/results/gallery-ui-thread-2026-09-23.md)).
-//
-// This entry point keeps the part that cannot go -- BenchPage stays mounted,
-// because a State unmounted mid-run cannot make the next AnimationController
-// -- and drops everything else. The difference between this and `main.dart`
-// on the same scene is what the shell costs.
-//
-// It is a measuring instrument, not a product. Nothing ships it.
+// BenchPage stays mounted while a scene runs, because a State unmounted
+// mid-run cannot make the next AnimationController.
 import 'package:flutter/material.dart';
 
-import 'bench/bench_page.dart';
-import 'bench/runner.dart';
+import 'bench_page.dart';
+import 'runner.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  print('bench_only: the shell is one Stack');
+  // A positive control for the engine's log_message_callback: if this line is
+  // not in the log, nothing else in it about Dart is complete.
+  print('bench: dart print reaches the engine log');
   FlutterError.onError = (details) {
-    print('bench_only: FlutterError ${details.exceptionAsString()}');
+    print('bench: FlutterError ${details.exceptionAsString()}');
     FlutterError.presentError(details);
   };
-  runApp(const _BenchOnlyApp());
+  runApp(const BenchApp());
 }
 
-class _BenchOnlyApp extends StatelessWidget {
-  const _BenchOnlyApp();
+class BenchApp extends StatelessWidget {
+  const BenchApp({super.key});
 
   @override
   Widget build(BuildContext context) => MaterialApp(
         debugShowCheckedModeBanner: false,
-        // The same theme as main.dart. A different one would change what the
-        // scenes paint, and then the two builds would not compare.
+        // The gallery's theme, which every baseline before 2026-10-01 was
+        // measured under. Another theme changes what the scenes paint.
         theme: ThemeData(
           brightness: Brightness.dark,
           colorSchemeSeed: const Color(0xFF4C8DFF),
@@ -77,6 +73,10 @@ class _RootState extends State<_Root> with TickerProviderStateMixin {
               children: [
                 Offstage(offstage: stage != null, child: bench),
                 if (stage != null)
+                  // Material, not Scaffold. ListTile and CircleAvatar reach
+                  // for Material.of(context)!, which in release is a null
+                  // check on nothing. A Scaffold would add furniture the
+                  // scene would then be measured painting.
                   Material(
                     color: Theme.of(context).scaffoldBackgroundColor,
                     child: stage,

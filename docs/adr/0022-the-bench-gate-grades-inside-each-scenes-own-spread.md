@@ -60,7 +60,7 @@ Four faults in the measurement made it worse, and were found while fixing it:
    to whole vsyncs and a count of rare events cannot resolve a change.
 7. **A window too short to measure** (under 1200 ms or 5 frames) is listed and
    not graded. It does not fail the run.
-8. **The baseline covers three launches:** one `tools/bench.sh --baseline`,
+8. **The baseline covers three launches:** one `tool/bench.sh --baseline`,
    then two `--baseline-add`. The baseline keeps the newest 12 repetitions per
    scene, and refuses to add a run with another method, engine or clocks.
 9. **The method id carries a measurement version** (`v2`), so a result from
@@ -110,5 +110,5 @@ whose raster is near 1 ms, one median (`scroll_fling`) and one build
 ## Related
 
 - [ADR-0017](0017-the-gallery-becomes-the-benchmark.md): the benchmark, whose decision 8 this replaces
-- `tools/bench-report.py`: `GRADED`, `MIN_BAND`, `MAX_GRADEABLE_SPREAD`, `merge_into_baseline`
-- `samples/gallery/lib/bench/runner.dart`: `_repeat`, the warm-up rounds, `_measurementVersion`
+- `tool/bench-report.py`: `GRADED`, `MIN_BAND`, `MAX_GRADEABLE_SPREAD`, `merge_into_baseline`
+- `lib/runner.dart`: `_repeat`, the warm-up rounds, `_measurementVersion`

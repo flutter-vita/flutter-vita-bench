@@ -1,0 +1,7 @@
+.dart_tool/
+build/
+.flutter-plugins-dependencies
+# What tool/bench.sh pulls from the console. baseline/ is the only result kept.
+out/
+.DS_Store
+__pycache__/

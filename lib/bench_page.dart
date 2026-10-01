@@ -1,13 +1,13 @@
-// The gallery's Scenes tab.
+// The app's one page: the scene list, Run, and the last result.
 //
-// Two ways in. A person opens it and taps Run, which is what makes a red row
-// worth looking at; or the host writes bench.on and relaunches, and the tab
-// runs itself and writes a result file.
+// Two ways in. A person opens the app and taps Run, which is what makes a red
+// row worth looking at; or the host writes bench.on and relaunches, and the
+// page runs itself and writes a result file.
 //
-// While a scene runs it takes the content area: the tab hands the scene
-// widget to the Shell through `stage`, and the Shell draws it there, under
-// the strip, with the rail gone. The tab itself stays mounted behind it, so
-// the run it owns keeps its ticker and its context.
+// While a scene runs it takes the screen: the page hands the scene widget to
+// the root through `stage`, and the root draws it over the page. The page
+// stays mounted behind it, so the run it owns keeps its ticker and its
+// context.
 
 import 'dart:async';
 
@@ -25,16 +25,14 @@ class BenchPage extends StatefulWidget {
     this.autoRun = false,
   });
 
-  /// The scene being measured, or null. Owned by the Shell, which shows it
-  /// in the content area.
+  /// The scene being measured, or null. Owned by the root, which shows it
+  /// over this page.
   final ValueNotifier<Widget?> stage;
 
-  /// The running scene's name, for the strip. Owned by the Shell.
+  /// The running scene's name. Owned by the root.
   final ValueNotifier<String?> scene;
 
-  /// The Shell's. Not this tab's own: the tabs sit in an IndexedStack, which
-  /// mutes the tickers of the tabs it is not showing, and a run must go on
-  /// while the person looks at another tab.
+  /// The root's, so the run's ticker outlives anything this page rebuilds.
   final TickerProvider vsync;
 
   /// Started by the host rather than by a person: run immediately, write the
@@ -57,7 +55,7 @@ class _BenchPageState extends State<BenchPage> {
   /// The HUD costs about 300 us a frame and is drawn into the frame it is
   /// measuring; a 45-versus-60 fps difference was once attributed to it and then
   /// disproved. Dart cannot switch it off, so the run waits and
-  /// `tools/bench.sh` sends `overlay off` during the wait.
+  /// `tool/bench.sh` sends `overlay off` during the wait.
   static const Duration _hostWindow = Duration(seconds: 3);
 
   @override

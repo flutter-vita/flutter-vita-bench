@@ -1,27 +1,28 @@
 #!/usr/bin/env bash
-# Run the gallery's benchmark on both renderers and compare. ADR-0017.
+# Run the benchmark on the console and compare it with the baseline. ADR-0017.
 #
-#   ./tools/bench.sh                       the GPU, the only renderer anyone runs
-#   ./tools/bench.sh --only sw             software, to localise a GL defect
-#   ./tools/bench.sh --baseline            write the result in as the baseline
-#   ./tools/bench.sh --baseline-add        add the result to the baseline: one
+#   ./tool/bench.sh                        the GPU, the only renderer anyone runs
+#   ./tool/bench.sh --only sw              software, to localise a GL defect
+#   ./tool/bench.sh --baseline             write the result in as the baseline
+#   ./tool/bench.sh --baseline-add         add the result to the baseline: one
 #                                          --baseline, then two of these, makes a
 #                                          baseline over three launches
-#   ./tools/bench.sh --relaunch            reuse the installed build, skip deploy
-#   ./tools/bench.sh --leave sw|gl         renderer the console rests on (default gl)
-#   ./tools/bench.sh --scenes a,b,c        run only these scenes
-#   ./tools/bench.sh --stuck-after 150     seconds on one scene before it is stuck
-#   ./tools/bench.sh --host IP --receiver-port N
-#   ./tools/bench.sh --suite conformance   the probe suite, unattended, out/bench/conformance.json
-#   ./tools/bench.sh --suite hardware      the hardware checks, out/bench/hardware.json
-#   ./tools/bench.sh --suite all           scenes, then conformance, then hardware
+#   ./tool/bench.sh --relaunch             reuse the installed build, skip deploy
+#   ./tool/bench.sh --leave sw|gl          renderer the console rests on (default gl)
+#   ./tool/bench.sh --scenes a,b,c         run only these scenes
+#   ./tool/bench.sh --stuck-after 150      seconds on one scene before it is stuck
+#   ./tool/bench.sh --host NAME --receiver-port N
+#
+# Needs the flutter-vita toolchain: `flutter-vita` on PATH, or FLUTTER_VITA_ROOT
+# set to a checkout of github.com/flutter-vita/flutter-vita. It builds with
+# `flutter-vita build` and uses the toolchain's deploy.sh and diag.sh.
 #
 # A scene that does not end is handled, not waited on. The app itself relaunches
 # when its UI thread stops answering for 30 s (the embedder's watchdog, which
 # leaves stall.txt and stall.log on the card); this script covers the other
 # case, a UI thread that answers while the scene never advances: after
 # --stuck-after seconds on one scene it takes two `diag` samples and the log,
-# saves them under out/bench/, resolves the stacks against the ELF of this
+# saves them under out/, resolves the stacks against the ELF of this
 # build, and sends `relaunch`. Either way the app resumes from bench-partial.json,
 # skips the scene it was inside, marks it interrupted, and the run completes.
 #
@@ -37,6 +38,19 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 
+# The toolchain checkout: FLUTTER_VITA_ROOT, or the one whose cli/flutter-vita
+# is on PATH.
+TOOL="${FLUTTER_VITA_ROOT:-}"
+if [ -z "$TOOL" ]; then
+  FV="$(command -v flutter-vita)" || {
+    echo "!! flutter-vita is not on PATH and FLUTTER_VITA_ROOT is not set" >&2
+    echo "   https://github.com/flutter-vita/flutter-vita#quick-start" >&2
+    exit 1
+  }
+  TOOL="$(cd "$(dirname "$(realpath "$FV")")/.." && pwd)"
+fi
+[ -x "$TOOL/tools/deploy.sh" ] || { echo "!! $TOOL is not a flutter-vita checkout" >&2; exit 1; }
+
 # fluttervita.local, not an address. The dev server answers mDNS for that name
 # (see the mDNS section of devserver.c), so this survives the console coming
 # back on a different lease -- which it does, often. VITA_HOST still overrides
@@ -44,9 +58,9 @@ ROOT="$(cd "$HERE/.." && pwd)"
 HOST="${VITA_HOST:-fluttervita.local}"
 DEV=1339
 LDR=1341
-APP_VPK="$ROOT/samples/gallery/build/vita/gallery.vpk"
-BASELINE_DIR="$ROOT/samples/gallery/bench"
-OUT_DIR="$ROOT/out/bench"
+APP_VPK="$ROOT/build/vita/flutter_vita_bench.vpk"
+BASELINE_DIR="$ROOT/baseline"
+OUT_DIR="$ROOT/out"
 # GPU only, unless asked otherwise.
 #
 # Every run used to do software and GPU and diff them. Nobody ships software
@@ -75,14 +89,9 @@ RELAUNCH=0
 # Seconds on one scene before the host declares it stuck. The longest scene is
 # under a minute on the GPU; software runs are slower and can raise this.
 STUCK_AFTER=150
-# Which of the gallery's suites: scenes (the benchmark, the default),
-# conformance, hardware, or all three in that order. Each is started by its
-# own switch on the card and ends with its own done marker (samples/README.md).
-SUITE="scenes"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --suite)       SUITE="$2"; shift 2 ;;
     --host)        HOST="$2"; shift 2 ;;
     --receiver-port) LDR="$2"; shift 2 ;;
     --only)        ONLY="$2"; shift 2 ;;
@@ -93,7 +102,7 @@ while [ $# -gt 0 ]; do
     --baseline-add) WRITE_BASELINE=2; shift ;;
     --no-build)    BUILD=0; shift ;;
     --relaunch)    RELAUNCH=1; BUILD=0; shift ;;
-    -h|--help)     sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)     sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -133,21 +142,21 @@ put() {  # <content> <device path>
 mkdir -p "$OUT_DIR" "$BASELINE_DIR"
 
 if [ "$BUILD" -eq 1 ]; then
-  echo "==> building gallery"
-  "$HERE/build-vita-app.sh" "$ROOT/samples/gallery" >/dev/null
+  echo "==> building the bench app"
+  "$TOOL/cli/flutter-vita" build "$ROOT" >/dev/null
 fi
 [ -f "$APP_VPK" ] || { echo "!! no $APP_VPK" >&2; exit 1; }
 
 # One run: set the renderer, deploy so the app restarts into it, wait for the
 # result file, pull it.
 #
-# The ELF of the build under test, for the stack scans. build-vita-app.sh
-# leaves it next to the vpk; a --no-build run of a vpk from elsewhere has none
+# The ELF of the build under test, for the stack scans. The build leaves it
+# under build/vita/cmake; a --no-build run of a vpk from elsewhere has none
 # that matches, and a mismatched ELF resolves to nonsense, so it is used only
 # when its eboot is the one in the vpk.
 elf_for_vpk() {
-  local elf="$ROOT/samples/gallery/build/vita/cmake/flutter_vita_app"
-  local built="$ROOT/samples/gallery/build/vita/cmake/flutter_vita_app.vpk"
+  local elf="$ROOT/build/vita/cmake/flutter_vita_app"
+  local built="$ROOT/build/vita/cmake/flutter_vita_app.vpk"
   [ -f "$elf" ] && [ -f "$built" ] || return 1
   local a b
   a="$(unzip -p "$APP_VPK" eboot.bin 2>/dev/null | md5 -q 2>/dev/null || true)"
@@ -160,7 +169,7 @@ elf_for_vpk() {
 resolve_report() {  # <report file>
   local elf
   elf="$(elf_for_vpk)" || { echo "       (no matching ELF, stacks left raw)"; return 0; }
-  "$HERE/diag.sh" --resolve "$1" --elf "$elf" > "$1.resolved" 2>&1 || true
+  "$TOOL/tools/diag.sh" --resolve "$1" --elf "$elf" > "$1.resolved" 2>&1 || true
   echo "       resolved: $1.resolved"
   # The two threads that matter, first frames only, so the verdict is on screen.
   grep -A 6 -E "^(io.flutter.ui|io.flutter.raster) " "$1.resolved" | sed 's/^/       /' | head -n 16
@@ -204,11 +213,6 @@ run_one() {  # <sw|gl>
   echo "==> $mode: arming"
   put "$swval" "ux0:data/flutter-vita/software.on"
   put "1"      "ux0:data/flutter-vita/bench.on"
-  # The gallery's strip of live numbers ticks twice a second through the
-  # scenes and its frame costs them stalls (run 35 against 36, 2026-09-14).
-  # Frozen for the host's runs, so their sums compare with the runs before
-  # the strip; a run from the console's own TESTS tab keeps it live.
-  put "1"      "ux0:data/flutter-vita/hud.off"
   # Always written, even when empty: the receiver can put a file and cannot
   # delete one, so a stale subset from the previous invocation would silently
   # restrict a run that asked for everything.
@@ -232,7 +236,7 @@ run_one() {  # <sw|gl>
     say "$DEV" relaunch 10 >/dev/null || true
   else
     echo "==> $mode: deploying"
-    VITA_HOST="$HOST" "$HERE/deploy.sh" --vpk "$APP_VPK" --receiver-port "$LDR" \
+    VITA_HOST="$HOST" "$TOOL/tools/deploy.sh" --vpk "$APP_VPK" --receiver-port "$LDR" \
       >"$OUT_DIR/$mode-deploy.log" 2>&1 || true
   fi
 
@@ -324,77 +328,9 @@ run_one() {  # <sw|gl>
   echo "    $OUT_DIR/$mode.json"
 }
 
-# The conformance and hardware suites: arm the switch, relaunch (or deploy),
-# wait for the done marker, pull the result. No renderer flip, no baseline;
-# their verdicts are pass counts, printed here and kept as JSON.
-run_suite() {  # <conformance|hardware>
-  local suite="$1"
-  echo "==> $suite: arming"
-  put "0" "ux0:data/flutter-vita/bench.on"
-  put "0" "ux0:data/flutter-vita/software.on"
-  put "0" "ux0:data/flutter-vita/hud.off"
-  put "1" "ux0:data/flutter-vita/$suite.on"
-  put "0" "ux0:data/flutter-vita/$suite-done"
-  put "-" "ux0:data/flutter-vita/stall.txt"
-  if [ "$RELAUNCH" -eq 1 ] && say "$DEV" ping 4 | grep -q pong; then
-    echo "==> $suite: relaunching the installed build"
-    say "$DEV" relaunch 10 >/dev/null || true
-  elif say "$DEV" ping 4 | grep -q pong; then
-    echo "==> $suite: relaunching the installed build (deployed for the scenes)"
-    say "$DEV" relaunch 10 >/dev/null || true
-  else
-    echo "==> $suite: deploying"
-    VITA_HOST="$HOST" "$HERE/deploy.sh" --vpk "$APP_VPK" --receiver-port "$LDR" \
-      >"$OUT_DIR/$suite-deploy.log" 2>&1 || true
-  fi
-  echo "==> $suite: running"
-  local started done=0 i
-  started=$(date +%s)
-  for i in $(seq 1 300); do
-    if say "$DEV" "get ux0:data/flutter-vita/$suite-done" 2 | grep -q '^1'; then
-      done=1; break
-    fi
-    # Once every 20 s, so the wait reads as progress rather than silence.
-    [ $((i % 10)) -eq 0 ] && echo "    $(date +%H:%M:%S) $suite running, $(( $(date +%s) - started )) s"
-    sleep 2
-  done
-  put "0" "ux0:data/flutter-vita/$suite.on"
-  [ "$done" -eq 1 ] || { echo "!! $suite: the run never finished" >&2; return 1; }
-  say "$DEV" "get ux0:data/flutter-vita/$suite-result.json" 30 > "$OUT_DIR/$suite.json"
-  python3 - "$OUT_DIR/$suite.json" "$suite" <<'PY' || return 1
-import json, sys
-d = json.load(open(sys.argv[1]))
-suite = sys.argv[2]
-print(f"    {sys.argv[1]}  ({d.get('engine', 'no engine stamp')})")
-if suite == "conformance":
-    print(f"    {d['pass']} pass  {d['fail']} fail  {d['skip']} skip")
-    for p in d["probes"]:
-        if p["outcome"] == "fail":
-            print(f"      FAIL {p['group']}/{p['name']}  {p['detail']}")
-else:
-    print(f"    {d['pass']} pass  {d['fail']} fail  {d['eye']} by eye  {d['off']} off")
-    for c in d["checks"]:
-        if c["state"] != "pass":
-            print(f"      {c['state'].upper():4s} {c['title']}: {c['detail']}")
-PY
-}
-
-case "$SUITE" in
-  scenes|all) ;;
-  conformance|hardware)
-    run_suite "$SUITE"
-    exit $? ;;
-  *) echo "unknown suite: $SUITE (scenes, conformance, hardware, all)" >&2; exit 2 ;;
-esac
-
 MODES="sw gl"
 [ -n "$ONLY" ] && MODES="$ONLY"
 for m in $MODES; do run_one "$m"; done
-if [ "$SUITE" = all ]; then
-  RELAUNCH=1
-  run_suite conformance || true
-  run_suite hardware || true
-fi
 
 # What renderer the console is left on.
 #
@@ -408,7 +344,6 @@ fi
 # So the resting state is GL, and --leave sw restores the old behaviour.
 put "$([ "$LEAVE" = sw ] && echo 1 || echo 0)" "ux0:data/flutter-vita/software.on"
 put "0" "ux0:data/flutter-vita/bench.on"
-put "0" "ux0:data/flutter-vita/hud.off"
 
 echo
 python3 "$HERE/bench-report.py" \

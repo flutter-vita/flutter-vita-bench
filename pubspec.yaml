@@ -1,0 +1,27 @@
+name: flutter_vita_bench
+description: The flutter-vita benchmark. 36 scenes, measured on a PS Vita.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # FlutterVita.info() for the clocks in the result header. A git dependency,
+  # the way any app outside the tool repository gets it until it is on pub.dev.
+  flutter_vita:
+    git:
+      url: https://github.com/flutter-vita/flutter-vita-packages.git
+      path: flutter_vita
+      ref: 3aa38534ec1e5d44a6cb3a2a3648197412c1a9e5
+
+# Its own slot. The gallery is FVTA00005 and the dev slot FVTA00002, so the
+# benchmark, the gallery and an app under work can all be installed at once.
+vita:
+  title_id: FVTA00006
+  name: Vita Bench
+
+flutter:
+  uses-material-design: true

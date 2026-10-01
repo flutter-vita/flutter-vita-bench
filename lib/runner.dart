@@ -27,15 +27,6 @@ const String kDonePath = '$kDataDir/bench-done';
 const String kSwitchPath = '$kDataDir/bench.on';
 const String kSoftwareSwitchPath = '$kDataDir/software.on';
 
-/// The other two suites of this app, same shape: a '1' starts an unattended
-/// run on that tab, the run writes `<suite>-result.json` and `<suite>-done`.
-const String kConformanceSwitchPath = '$kDataDir/conformance.on';
-const String kHardwareSwitchPath = '$kDataDir/hardware.on';
-const String kConformanceResultPath = '$kDataDir/conformance-result.json';
-const String kConformanceDonePath = '$kDataDir/conformance-done';
-const String kHardwareResultPath = '$kDataDir/hardware-result.json';
-const String kHardwareDonePath = '$kDataDir/hardware-done';
-
 /// Where suites write results now that more than one app has them.
 ///
 /// bench-result.json stays as well: the host tools read it, and a suite that
@@ -554,8 +545,8 @@ class BenchRunner {
 
   /// The clocks the console ran at, read once before the first scene.
   ///
-  /// The CONFIGURE tab can raise them, and a relaunch puts them back, so two
-  /// runs of the same binary are not comparable without this. On 2026-09-23 a
+  /// An app can change them (the gallery's CONFIGURE tab does), so two runs
+  /// of the same binary are not comparable without this. On 2026-09-23 a
   /// whole run was spent finding that out.
   String? _clocks;
 
@@ -684,7 +675,7 @@ class BenchRunner {
   void write() {
     final payload = <String, Object>{
       'schema': 1,
-      'suite': 'gallery',
+      'suite': 'bench',
       'software_on_requested': switchOn(kSoftwareSwitchPath),
       'dart_version': Platform.version.split(' ').first,
       // When, and by which engine. Both absent until today, which is why the
@@ -714,7 +705,7 @@ class BenchRunner {
     // receiver lists. The legacy path stays for the host tools.
     try {
       Directory(kBenchDir).createSync(recursive: true);
-      _writeAtomic('$kBenchDir/FVTA00002-gallery.json', text);
+      _writeAtomic('$kBenchDir/FVTA00006-bench.json', text);
     } catch (_) {
       // The TESTS-tab copy is a convenience. Losing it must not lose the run.
     }
@@ -730,7 +721,7 @@ class BenchRunner {
   ///
   /// A run launched from the TESTS tab used to end with the app sitting on its
   /// results and the receiver gone. Host-started runs are left alone:
-  /// tools/bench.sh wants the app alive afterwards.
+  /// tool/bench.sh wants the app alive afterwards.
   void _handBackIfAsked() {
     try {
       final marker = File(kFromReceiverPath);
@@ -752,8 +743,7 @@ class BenchRunner {
 ///
 /// A reader that catches a half-written result must not be able to parse it
 /// as a short one: the receiver would show a run that lost most of its scenes
-/// as a run that measured three. Shared with the conformance and hardware
-/// suites since they moved into this app.
+/// as a run that measured three.
 void writeAtomic(String path, String text) {
   final tmp = File('$path.part');
   tmp.writeAsStringSync(text, flush: true);
