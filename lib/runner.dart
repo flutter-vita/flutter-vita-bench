@@ -39,10 +39,6 @@ const String kBenchDir = '$kDataDir/bench';
 /// from one a host script started: both write bench.on.
 const String kFromBridgePath = '$kDataDir/bench.from-bridge';
 
-/// The same marker from a bridge built before 2026-10-01, when it was the
-/// receiver.
-const String kFromReceiverPath = '$kDataDir/bench.from-receiver';
-
 /// Asking the dev server to give the console back. See HANDOFF_REQUEST in
 /// devserver.c -- Dart cannot launch a title itself.
 const String kHandoffPath = '$kDataDir/handoff.request';
@@ -728,13 +724,9 @@ class BenchRunner {
   /// tool/bench.sh wants the app alive afterwards.
   void _handBackIfAsked() {
     try {
-      final markers = [File(kFromBridgePath), File(kFromReceiverPath)]
-          .where((f) => f.existsSync())
-          .toList();
-      if (markers.isEmpty) return;
-      for (final m in markers) {
-        m.deleteSync();
-      }
+      final marker = File(kFromBridgePath);
+      if (!marker.existsSync()) return;
+      marker.deleteSync();
       // Last, and after bench-done: the dev server acts on this within half a
       // second, and anything written afterwards would not be written.
       File(kHandoffPath).writeAsStringSync('', flush: true);
