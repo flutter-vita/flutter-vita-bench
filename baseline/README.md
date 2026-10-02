@@ -57,7 +57,7 @@ header is what covers that.
 ## sw.json was frozen on purpose
 
 Software rendering became opt-in on 2026-08-24
-([ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/main/docs/adr/0014-gpu-backend-via-vitagl.md)): the GPU wins
+([ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0014-gpu-backend-via-vitagl.md)): the GPU wins
 every scene, by 17–20× on the route transitions. Nothing is being optimised on
 the software path, and a full software run costs about two and a half minutes
 of console time per invocation.
@@ -95,7 +95,7 @@ runs of the same binary:
   between them reached the 159 MB ceiling in twelve seconds. `route_wrap` was
   scene 12 of 18 in the order these numbers were taken in, which puts it just
   past the threshold. See
-  [page-transitions-2026-09-01.md](https://github.com/flutter-vita/flutter-vita/blob/main/docs/results/page-transitions-2026-09-01.md).
+  [page-transitions-2026-09-01.md](https://github.com/flutter-vita/flutter-vita/blob/master/docs/results/page-transitions-2026-09-01.md).
 
   The original wording follows, because the reasoning still applies to whatever
   is left after the leak is accounted for. `route_push` builds the most and
