@@ -16,7 +16,7 @@ The port renders. It is stable enough that the open question stopped being
 Everything measured so far has been measured badly, and the failures are all
 the same shape.
 
-- [ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0014-gpu-backend-via-vitagl.md) records manga_reader going from
+- [ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/main/docs/adr/0014-gpu-backend-via-vitagl.md) records manga_reader going from
   45 to 60 fps under GL. On 2026-08-24 that app turned out to be showing a
   loading spinner and then its own error page, because the content never
   arrives over the network. The figure is unverified, not disproven, and
@@ -140,7 +140,7 @@ two relaunches at about three seconds each.
 - **The gallery stops being only an eye-check.** Its own header calls it "what
   this port looks like, judged by eye"; it now also produces numbers, and the
   two purposes have to coexist in one app. Accepted over a fifth product
-  against [ADR-0015](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0015-four-products-one-audience.md)'s four, and over a
+  against [ADR-0015](https://github.com/flutter-vita/flutter-vita/blob/main/docs/adr/0015-four-products-one-audience.md)'s four, and over a
   hidden bench mode behind a file switch.
 - **A committed baseline is a file that will be wrong and have to be updated**,
   and every update is a judgement about whether a change was an improvement or
@@ -419,6 +419,6 @@ obvious way.
 
 ## Related
 
-- [ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0014-gpu-backend-via-vitagl.md) — the GPU path, and the numbers this exists to stop retracting
-- [ADR-0015](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0015-four-products-one-audience.md) — the four products the gallery is one of
-- [ADR-0006](https://github.com/flutter-vita/flutter-vita/blob/master/docs/adr/0006-performance-bar-set-from-measurement.md) — the performance bar this measures against
+- [ADR-0014](https://github.com/flutter-vita/flutter-vita/blob/main/docs/adr/0014-gpu-backend-via-vitagl.md) — the GPU path, and the numbers this exists to stop retracting
+- [ADR-0015](https://github.com/flutter-vita/flutter-vita/blob/main/docs/adr/0015-four-products-one-audience.md) — the four products the gallery is one of
+- [ADR-0006](https://github.com/flutter-vita/flutter-vita/blob/main/docs/adr/0006-performance-bar-set-from-measurement.md) — the performance bar this measures against
