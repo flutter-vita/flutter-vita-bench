@@ -321,8 +321,17 @@ run_one() {  # <sw|gl>
     resolve_report "$OUT_DIR/$mode-stall.txt"
   fi
 
-  say "$DEV" "get ux0:data/flutter-vita/bench-result.json" 30 \
-    > "$OUT_DIR/$mode.json"
+  # The Wi-Fi can cut a pull short: on 2026-10-12 four pulls of one 81 KB file
+  # stopped at four different lengths. The file on the card is whole, so pull
+  # again until the copy parses.
+  local try
+  for try in 1 2 3 4 5 6; do
+    say "$DEV" "get ux0:data/flutter-vita/bench-result.json" 30 \
+      > "$OUT_DIR/$mode.json"
+    python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT_DIR/$mode.json" \
+      2>/dev/null && break
+    echo "    pull $try stopped at $(wc -c < "$OUT_DIR/$mode.json" | tr -d ' ') bytes; pulling again"
+  done
   python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT_DIR/$mode.json" \
     || { echo "!! $mode: result file is not valid JSON" >&2; return 1; }
   echo "    $OUT_DIR/$mode.json"
