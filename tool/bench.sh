@@ -322,16 +322,22 @@ run_one() {  # <sw|gl>
   fi
 
   # The Wi-Fi can cut a pull short: on 2026-10-12 four pulls of one 81 KB file
-  # stopped at four different lengths. The file on the card is whole, so pull
-  # again until the copy parses.
-  local try
-  for try in 1 2 3 4 5 6; do
-    say "$DEV" "get ux0:data/flutter-vita/bench-result.json" 30 \
-      > "$OUT_DIR/$mode.json"
-    python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT_DIR/$mode.json" \
-      2>/dev/null && break
-    echo "    pull $try stopped at $(wc -c < "$OUT_DIR/$mode.json" | tr -d ' ') bytes; pulling again"
-  done
+  # stopped at four different lengths. The toolchain's pull.sh compares the
+  # copy with the file's size and pulls again. A checkout from before it (an
+  # A/B against an older tree) gets the old way: pull until the copy parses.
+  if [ -x "$TOOL/tools/pull.sh" ]; then
+    "$TOOL/tools/pull.sh" "$DEV" ux0:data/flutter-vita/bench-result.json \
+      "$OUT_DIR/$mode.json" --host "$HOST" --wait 30 || true
+  else
+    local try
+    for try in 1 2 3 4 5 6; do
+      say "$DEV" "get ux0:data/flutter-vita/bench-result.json" 30 \
+        > "$OUT_DIR/$mode.json"
+      python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT_DIR/$mode.json" \
+        2>/dev/null && break
+      echo "    pull $try stopped at $(wc -c < "$OUT_DIR/$mode.json" | tr -d ' ') bytes; pulling again"
+    done
+  fi
   python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT_DIR/$mode.json" \
     || { echo "!! $mode: result file is not valid JSON" >&2; return 1; }
   echo "    $OUT_DIR/$mode.json"
