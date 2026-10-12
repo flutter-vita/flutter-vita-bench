@@ -16,11 +16,14 @@ launches shows it in its own spread:
 ./tool/bench.sh --relaunch --baseline-add
 ```
 
-**`gl.json` is current: 36 scenes, 2026-10-01, three launches of this app
-(FVTA00006), 444/222 MHz, method `c3529610`, engine `ff08f75c`. There is no
-software baseline.** The baselines before it were taken inside the gallery's
-shell, and the numbers of the two apps do not compare. A fourth run on the same
-day passed the gate: no regressions, 89 of 108 values graded. `sw.json` was
+**`gl.json` is current: 36 scenes, 2026-10-12, three launches of this app
+(FVTA00006) on Flutter 3.47.7, 444/222 MHz, method `c3529610`, engine
+`059e116853`. There is no software baseline.** A fourth run on the same day
+passed the gate: no regressions, 88 of 108 values graded. The baseline before
+it (2026-10-01, Flutter 3.44.8, engine `ff08f75c`) is in `git log`. On 3.47.7,
+text_slide build is 8 to 13% above that one, so it failed the gate at random.
+The baselines before 2026-10-01 were taken inside the gallery's shell, and the
+numbers of the two apps do not compare. `sw.json` was
 taken at 333 MHz, before the clock fix of 2026-09-23, so it is deleted. Take it
 with `./tool/bench.sh --only sw --baseline`, and take a fresh GL run in the
 same sitting if the pair is going to carry the renderer ratio.
