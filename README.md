@@ -90,4 +90,4 @@ each file from its first commit.
 
 ## License
 
-BSD 3-Clause, the same as flutter-vita. See [LICENSE](LICENSE).
+zlib, the same as flutter-vita. See [LICENSE](LICENSE).
