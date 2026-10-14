@@ -12,7 +12,7 @@ must know whether frames got slower.
 ## What you need
 
 - The flutter-vita toolchain, with `flutter-vita` on your `PATH`. See its
-  [Quick start](https://github.com/flutter-vita/flutter-vita#quick-start).
+  [Installation](https://github.com/flutter-vita/flutter-vita#installation).
   Or set `FLUTTER_VITA_ROOT` to a checkout of it.
 - A console with the bridge open, on the same network as the computer. The
   scripts find it as `fluttervita.local`.
