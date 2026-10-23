@@ -25,12 +25,11 @@ packages:
   flutter_vita:
     dependency: "direct main"
     description:
-      path: flutter_vita
-      ref: "3aa38534ec1e5d44a6cb3a2a3648197412c1a9e5"
-      resolved-ref: "3aa38534ec1e5d44a6cb3a2a3648197412c1a9e5"
-      url: "https://github.com/flutter-vita/flutter-vita-packages.git"
-    source: git
-    version: "0.1.0"
+      name: flutter_vita
+      sha256: "00b997c69460bdf585bf78eb1636ed81869b388b549ef31eaccdb71aa4254948"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   material_color_utilities:
     dependency: transitive
     description:
@@ -63,12 +62,11 @@ packages:
   vita_file_browser:
     dependency: transitive
     description:
-      path: vita_file_browser
-      ref: "3aa38534ec1e5d44a6cb3a2a3648197412c1a9e5"
-      resolved-ref: "3aa38534ec1e5d44a6cb3a2a3648197412c1a9e5"
-      url: "https://github.com/flutter-vita/flutter-vita-packages.git"
-    source: git
-    version: "0.1.0"
+      name: vita_file_browser
+      sha256: "52956b8cad11f3ae404c5a433ff8f983d8b44dc59e1171873a44273bcd659012"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
 sdks:
   dart: ">=3.11.0-0 <4.0.0"
   flutter: ">=3.44.0"
